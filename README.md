@@ -1,6 +1,5 @@
-# Asynchronous VLM-Supervised Selective Grasping — project page
+# Asynchronous VLM-Supervised Selective Grasping
 
-Static project website (GitHub Pages ready).
 
 ## Deploy
 1. Create a repo (e.g. `vlm-selective-grasping`) and push these files to the default branch:
