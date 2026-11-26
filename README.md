@@ -12,7 +12,7 @@ A vision-language model runs in parallel as a high-level supervisor and decides 
 <p align="center">
   <img src="assets/pipeline.png" width="90%" alt="System pipeline">
 </p>
-
+<!--   -->
 ---
 
 ## Overview
@@ -39,9 +39,6 @@ The same channel adds run-time retargeting, mid-task abort with return-to-home, 
 
 Every failure was a *physical* grasp slip on the upright markers, **not** a selection error. All selectivity comes from the supervisor at zero additional data cost — the policy is trained from only **20 demonstrations (~6 min of teleoperation)**.
 
-<p align="center">
-  <img src="assets/selectivity.png" width="90%" alt="Selectivity: green present → gate present → act; distractors only → gate absent → hold">
-</p>
 
 ## Hardware
 
@@ -54,9 +51,10 @@ Every failure was a *physical* grasp slip on the upright markers, **not** a sele
 - **Trained ACT policy** — frozen policy from 20 demonstrations, with LeRobot pre/post-processors: `<HF_MODEL_URL>`
 - **Demonstration dataset** — 20 episodes, 10,566 frames @ 30 fps, 640×480 wrist camera + 6-DoF state, LeRobot format: `<HF_DATASET_URL>`
 
+<!--   
 ## Code
 
-Code release coming soon. ⭐ Star/watch this repo for updates.
+Code release coming soon. ⭐ Star/watch this repo for updates.-->
 
 ## Citation
 
