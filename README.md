@@ -12,6 +12,23 @@ A vision-language model runs in parallel as a high-level supervisor and decides 
 <p align="center">
   <img src="assets/pipeline.png" width="90%" alt="System pipeline">
 </p>
+
+<table align="center">
+<tr>
+<td width="33%" align="center">
+<video src="https://github.com/USER/REPO/raw/main/videos/one-object-picked.mp4" controls muted width="100%"></video>
+<br><sub><b>Selective grasp</b><br>picks green among three, ignores the rest</sub>
+</td>
+<td width="33%" align="center">
+<video src="https://github.com/USER/REPO/raw/main/videos/only-green-two.mp4" controls muted width="100%"></video>
+<br><sub><b>Selective hold</b><br>picks green, ignores a new non-green marker</sub>
+</td>
+<td width="33%" align="center">
+<video src="https://github.com/USER/REPO/raw/main/videos/3-objects.mp4" controls muted width="100%"></video>
+<br><sub><b>Three colors</b><br>— describe this one</sub>
+</td>
+</tr>
+</table>
 <!--   -->
 ---
 
