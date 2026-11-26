@@ -62,8 +62,7 @@ Code release coming soon. ⭐ Star/watch this repo for updates.-->
 @inproceedings{sanaullah2026vlmsupervised,
   title     = {Asynchronous Language-Conditioned Object Selection for
                Imitation Policies via a VLM Supervisor},
-  author    = {Sanaullah and Kumar, Abhishek and Kim, Jeong Yong and
-               Abbasi, Saad Jamshed and Han, Byung-Kil and Park, Dong Il},
+  author    = {Sanaullah},
   booktitle = {Preprint},
   year      = {2026}
 }
