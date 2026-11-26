@@ -290,35 +290,34 @@ footer strong{color:var(--text)}
   <h2>Watch it run</h2>
   <p class="sec-sub">Three representative trials on the real SO-ARM101. Upload the clips to <code>videos/</code> with the filenames shown; each slot shows a placeholder until the file is present.</p>
 
-  <div class="vgrid3">
     <div class="vc">
       <div class="vwrap">
         <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
-          <source src="videos/select_green.mp4" type="video/mp4">
+          <source src="videos/one-object-picked.mp4" type="video/mp4">
         </video>
-        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/select_green.mp4</small></div>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/one-object-picked.mp4</small></div>
       </div>
-      <div class="vi"><span class="vb vb-g">Selective grasp</span><h4>Picks green, ignores the rest</h4><p>Green target among blue and pink distractors — the supervisor opens the gate and the policy completes the pick-and-place.</p></div>
+      <div class="vi"><span class="vb vb-g">Selective grasp</span><h4>Picks green, ignores the rest</h4><p>Three markers on the table, target set to “green” — the arm picks only the green one and then waits at home, leaving the blue and pink markers untouched.</p></div>
     </div>
 
     <div class="vc">
       <div class="vwrap">
         <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
-          <source src="videos/reject_distractors.mp4" type="video/mp4">
+          <source src="videos/only-green-two.mp4" type="video/mp4">
         </video>
-        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/reject_distractors.mp4</small></div>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/only-green-two.mp4</small></div>
       </div>
-      <div class="vi"><span class="vb vb-w">Correct rejection</span><h4>Only distractors → holds</h4><p>No green in the scene — the gate stays closed and the arm holds at the home pose instead of grasping a wrong-color marker.</p></div>
+      <div class="vi"><span class="vb vb-g">Selective pick</span><h4>Picks green, ignores the other color</h4><p>The arm grasps the green marker. When a second, non-green marker is added, the gate stays closed — the arm waits at home and leaves it untouched.</p></div>
     </div>
 
     <div class="vc">
       <div class="vwrap">
         <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
-          <source src="videos/retarget_abort.mp4" type="video/mp4">
+          <source src="videos/3-objects.mp4" type="video/mp4">
         </video>
-        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/retarget_abort.mp4</small></div>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/3-objects.mp4</small></div>
       </div>
-      <div class="vi"><span class="vb vb-b">Live control</span><h4>Retarget &amp; mid-task abort</h4><p>Switch the target color on the fly, or remove the marker mid-approach — the arm aborts and returns home.</p></div>
+      <div class="vi"><span class="vb vb-g">Sequential picks</span><h4>Clears all three colors</h4><p>Green, then the other two colors requested in turn — the arm selects and picks each target successfully, one after another.</p></div>
     </div>
   </div>
   <p class="tbl-note" style="text-align:center;margin-top:10px">Keep each clip under 100&nbsp;MB (GitHub's per-file limit). MP4 (H.264) at 720–1080p works well.</p>
