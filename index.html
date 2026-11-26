@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asynchronous VLM-Supervised Selective Grasping</title>
+<meta name="description" content="Adding language-conditioned object selection to a frozen imitation policy — no retraining, no extra demonstrations. A vision-language supervisor gates a 30 Hz ACT policy on a low-cost SO-ARM101.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+[data-theme="light"]{
+  --bg:#faf9f6; --surface:#ffffff; --card:#ffffff; --border:#e8e6e0; --border2:#d8d4ca;
+  --accent:#1a6b4f; --accent2:#1a5fa5; --text:#1a1a1a; --muted:#5a5a5a;
+  --success:#1a6b4f; --warn:#9a6b10; --danger:#a7382f; --code-bg:#f3f1ec;
+  --mc-bg:#f4f2ec; --bar-bg:#ece9e1; --shadow:rgba(0,0,0,.06);
+  --grad1:#1a6b4f; --grad2:#1a5fa5; --tog-bg:#f4f2ec;
+  --soft:#eef5f0;
+}
+[data-theme="dark"]{
+  --bg:#0f1410; --surface:#161d16; --card:#1b241b; --border:#2a352a; --border2:#3a483a;
+  --accent:#5bc47c; --accent2:#7fa6e0; --text:#e8ece4; --muted:#9aa596;
+  --success:#5bc47c; --warn:#e0ab5c; --danger:#e07a72; --code-bg:#0c120c;
+  --mc-bg:#1b241b; --bar-bg:#223022; --shadow:rgba(0,0,0,.4);
+  --grad1:#5bc47c; --grad2:#7fa6e0; --tog-bg:#1b241b;
+  --soft:#16241b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Manrope',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased;transition:background-color .25s,color .25s}
+h1,h2,h3,h4{font-family:'Source Serif 4',Georgia,serif}
+a{color:var(--accent);text-decoration:none}
+:focus-visible{outline:2px solid var(--accent2);outline-offset:3px;border-radius:2px}
+
+/* nav */
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 36px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px var(--shadow)}
+.nav-left{display:flex;align-items:center;gap:26px}
+.nav-logo{font-family:'Source Serif 4',serif;font-size:1.05rem;font-weight:700;color:var(--accent)}
+.nav-links{display:flex;gap:18px}
+.nav-links a{color:var(--muted);font-size:.86rem;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.tog{background:var(--tog-bg);border:1px solid var(--border2);border-radius:20px;padding:5px 13px;cursor:pointer;font-size:.8rem;color:var(--text);font-family:'Manrope',sans-serif;font-weight:500}
+.tog:hover{border-color:var(--accent)}
+
+/* hero */
+.hero{padding:64px 36px 48px;text-align:center;border-bottom:1px solid var(--border);background:linear-gradient(to bottom,var(--soft),var(--bg) 70%)}
+.hero .eyebrow{font-weight:600;font-size:.82rem;letter-spacing:.04em;color:var(--accent);margin-bottom:16px;font-family:'Manrope',sans-serif}
+.hero h1{font-size:clamp(2rem,5vw,3.3rem);font-weight:700;line-height:1.1;letter-spacing:-.015em;max-width:18ch;margin:0 auto;background:linear-gradient(120deg,var(--grad1),var(--grad2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .tagline{font-size:clamp(1rem,2vw,1.18rem);color:var(--muted);max-width:60ch;margin:18px auto 0}
+.hero-meta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px auto 0;max-width:820px}
+.hero-meta .m{font-size:.78rem;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 12px}
+.hero-meta .m strong{color:var(--text);font-weight:600}
+.summary{background:var(--soft);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:12px;padding:15px 20px;max-width:720px;margin:24px auto 0;font-size:.86rem;color:var(--muted)}
+.btns{display:flex;flex-wrap:wrap;gap:11px;justify-content:center;margin:26px auto 0}
+.btn{font-family:'Manrope',sans-serif;font-weight:600;font-size:.92rem;display:inline-flex;align-items:center;gap:.5em;padding:.6em 1.1em;border-radius:10px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 24%,transparent)}
+.btn svg{width:1.05em;height:1.05em}
+.btn.ghost{background:var(--surface);color:var(--text);border-color:var(--border2)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn.blue{background:var(--accent2);border-color:var(--accent2)}
+
+/* sections */
+.sec{padding:56px 36px;max-width:980px;margin:0 auto}
+.sec h2{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);font-size:.9rem;margin-bottom:30px;max-width:72ch}
+hr{border:none;border-top:1px solid var(--border)}
+.eyebrow-s{font-family:'Manrope',sans-serif;font-weight:600;font-size:.8rem;color:var(--accent2);margin-bottom:8px;display:flex;align-items:center;gap:.5em}
+.eyebrow-s .sig{width:8px;height:8px;border-radius:50%;background:var(--accent2)}
+
+/* metric cards */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:13px;margin-bottom:34px}
+.mc{background:var(--mc-bg);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.mc .lbl{font-size:.72rem;color:var(--muted);letter-spacing:.4px;margin-bottom:6px;font-weight:500}
+.mc .val{font-family:'Source Serif 4',serif;font-size:1.85rem;font-weight:700;line-height:1}
+.mc .sub{font-size:.73rem;color:var(--muted);margin-top:5px}
+.c-g{color:var(--accent)}.c-b{color:var(--accent2)}.c-w{color:var(--warn)}
+
+/* bars */
+.bcols{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-bottom:28px}
+.bcol h4{font-size:.92rem;font-weight:600;margin-bottom:12px}
+.bg{margin-bottom:9px}
+.bl{font-size:.76rem;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:3px}
+.bw{background:var(--bar-bg);border-radius:4px;height:18px;overflow:hidden}
+.bf{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 7px;font-size:.66rem;font-weight:700;color:#fff;white-space:nowrap}
+
+/* insight */
+.insight{background:var(--soft);border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);border-radius:12px;padding:18px;margin:18px 0}
+.insight h4{color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:.5px;margin-bottom:7px;font-family:'Manrope',sans-serif}
+.insight p{color:var(--muted);font-size:.86rem;margin-bottom:6px}
+.insight p:last-child{margin-bottom:0}
+.insight strong{color:var(--text)}
+
+/* videos */
+.vgrid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:10px}
+@media(max-width:760px){.vgrid3{grid-template-columns:1fr}}
+.vc{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 2px 8px var(--shadow)}
+.vwrap{position:relative;background:#000;aspect-ratio:4/3}
+.vwrap video{width:100%;height:100%;display:block;object-fit:cover}
+.vph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--mc-bg);color:var(--muted);font-size:.84rem;text-align:center;padding:16px}
+.vph .big{font-size:1.6rem}
+.vph small{font-family:'JetBrains Mono',monospace;font-size:.72rem;opacity:.8}
+.vwrap.loaded .vph{display:none}
+.vi{padding:14px}
+.vi h4{font-size:.92rem;font-weight:600;margin-bottom:5px}
+.vi p{font-size:.8rem;color:var(--muted)}
+.vb{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.68rem;font-weight:700;margin-bottom:7px;font-family:'Manrope',sans-serif}
+.vb-g{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid var(--accent)}
+.vb-w{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);border:1px solid var(--warn)}
+.vb-b{background:color-mix(in srgb,var(--accent2) 14%,transparent);color:var(--accent2);border:1px solid var(--accent2)}
+
+/* figures */
+figure{margin:26px 0 8px}
+figure img{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+figcaption{font-size:.84rem;color:var(--muted);margin-top:11px;line-height:1.55}
+figcaption b{color:var(--text);font-weight:600}
+
+/* method cards */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:8px 0 10px}
+@media(max-width:680px){.two{grid-template-columns:1fr}.bcols{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 4px var(--shadow)}
+.card.g{border-top:3px solid var(--accent)}
+.card.b{border-top:3px solid var(--accent2)}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:8px}
+.card p,.card li{font-size:.85rem;color:var(--muted);margin-bottom:6px}
+.card ul{padding-left:17px}
+
+/* tables */
+.tbl-title{font-family:'Source Serif 4',serif;font-weight:600;font-size:1.02rem;margin:30px 0 10px}
+.tbl-title .tnum{font-family:'Manrope',sans-serif;color:var(--muted);font-weight:500;font-size:.84rem}
+.tbl-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table.rt{border-collapse:collapse;width:100%;font-size:.92rem;min-width:540px}
+table.rt th,table.rt td{padding:11px 14px;text-align:center;border-bottom:1px solid var(--border)}
+table.rt thead th{font-weight:600;font-size:.8rem;color:var(--muted);background:var(--mc-bg);border-bottom:1px solid var(--border2)}
+table.rt tbody tr:last-child td{border-bottom:none}
+table.rt td.rh,table.rt th.rh{text-align:left;font-weight:600;color:var(--text)}
+.ok,.zero{color:var(--accent);font-weight:700}
+.na{color:var(--muted)}
+.tbl-note{font-size:.79rem;color:var(--muted);margin-top:9px}
+
+/* resource cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+@media(max-width:640px){.cards{grid-template-columns:1fr}}
+.rcard{border:1px solid var(--border);border-radius:14px;padding:20px;background:var(--card);display:flex;flex-direction:column;gap:9px;box-shadow:0 1px 4px var(--shadow)}
+.rcard h3{font-size:1.05rem;font-weight:600;margin:0;display:flex;align-items:center;gap:.5em}
+.rcard p{font-size:.86rem;color:var(--muted);flex:1}
+.dot{width:.6em;height:.6em;border-radius:50%;display:inline-block}
+.dot.on{background:var(--accent)}.dot.off{background:var(--warn)}
+.kv{font-size:.78rem;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.kv span{background:var(--mc-bg);border:1px solid var(--border);padding:3px 8px;border-radius:6px}
+.rcard .btn{align-self:flex-start;margin-top:4px}
+
+/* bibtex */
+pre.bib{font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;background:var(--code-bg);color:var(--text);padding:20px;border-radius:12px;border:1px solid var(--border);overflow-x:auto;margin:14px 0 0}
+.copybar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:8px}
+.copybtn{font-family:'Manrope',sans-serif;font-weight:500;font-size:.82rem;padding:.42em .9em;border-radius:8px;border:1px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer}
+.copybtn:hover{border-color:var(--accent);color:var(--accent)}
+
+footer{padding:34px 36px;text-align:center;color:var(--muted);font-size:.82rem;border-top:1px solid var(--border)}
+footer a{margin:0 9px}
+footer strong{color:var(--text)}
+
+@media(max-width:680px){.nav-links{display:none}.sec{padding:40px 18px}nav{padding:11px 18px}.hero{padding:44px 18px 36px}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">VLM-Supervised Grasping</div>
+    <div class="nav-links">
+      <a href="#results">Results</a>
+      <a href="#videos">Videos</a>
+      <a href="#method">Method</a>
+      <a href="#dataset">Dataset</a>
+      <a href="#resources">Get it</a>
+    </div>
+  </div>
+  <button class="tog" onclick="toggleTheme()" id="tog-btn">🌙 Dark mode</button>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Robotic manipulation · vision-language supervision · preprint</div>
+  <h1>Asynchronous VLM-Supervised Selective Grasping</h1>
+  <p class="tagline">We add language-conditioned object selection to a <em>frozen</em> imitation policy — no retraining, no extra demonstrations. A vision-language model watches in parallel and decides <em>whether</em> to act; the policy decides <em>how</em>.</p>
+  <div class="hero-meta">
+    <div class="m"><strong>Robot</strong> SO-ARM101 / LeRobot</div>
+    <div class="m"><strong>Policy</strong> ACT · 20 demos</div>
+    <div class="m"><strong>Supervisor</strong> Cosmos3-Nano VLM</div>
+    <div class="m"><strong>Control</strong> 30 Hz async</div>
+    <div class="m"><strong>GPU</strong> RTX 5090</div>
+  </div>
+  <div class="summary">
+    A frozen ACT policy runs a 30&nbsp;Hz control loop and knows only <i>how</i> to pick. A VLM supervisor runs concurrently on shared camera frames at ~1–2&nbsp;Hz and decides <i>whether</i> the requested target is present — gating the policy so the arm acts only on the right object, with no retraining.
+  </div>
+  <div class="btns">
+    <a class="btn" href="#" aria-label="Read the paper">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/></svg> Paper</a>
+    <a class="btn ghost" href="#" aria-label="Code on GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .8.1-.6.3-1.1.6-1.4-2.2-.2-4.6-1.1-4.6-5a4 4 0 011-2.7c-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 015 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7a4 4 0 011 2.7c0 3.9-2.3 4.8-4.6 5 .4.3.7.9.7 1.8v2.6c0 .3.2.6.7.5A10 10 0 0012 2z"/></svg> Code</a>
+    <a class="btn blue" href="#resources" aria-label="Model">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg> Model</a>
+    <a class="btn ghost" href="#resources" aria-label="Dataset">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg> Dataset</a>
+  </div>
+</div>
+
+<!-- teaser figure -->
+<div class="sec">
+  <figure style="margin-top:0">
+    <img src="assets/pipeline.png" alt="System pipeline: wrist camera feeds a slow VLM supervisor lane and a fast ACT control lane; the gate lets the policy act only on the target.">
+    <figcaption><b>System overview.</b> The supervisor (slow lane) decides <i>whether</i> the target is present; the ACT policy (fast lane) decides <i>how</i> to pick. A non-blocking gate couples them.</figcaption>
+  </figure>
+</div>
+
+<hr>
+
+<!-- RESULTS -->
+<div class="sec" id="results">
+  <div class="eyebrow-s"><span class="sig"></span>Results</div>
+  <h2>Perfect selection, physical failures only</h2>
+  <p class="sec-sub">75 real-robot trials with upright, slip-prone markers. The system never grasped the wrong color; every failure was a physical slip, not a selection error. A held-out frame test isolates the supervisor and confirms perfect detection.</p>
+
+  <div class="mgrid">
+    <div class="mc"><div class="lbl">Selection accuracy</div><div class="val c-g">100%</div><div class="sub">0 wrong-color grasps</div></div>
+    <div class="mc"><div class="lbl">Single-target success</div><div class="val">54%</div><div class="sub">27 / 50 trials</div></div>
+    <div class="mc"><div class="lbl">3-color success</div><div class="val">52%</div><div class="sub">13 / 25 trials</div></div>
+    <div class="mc"><div class="lbl">VLM detection F1</div><div class="val c-g">1.00</div><div class="sub">50 held-out frames</div></div>
+    <div class="mc"><div class="lbl">Demonstrations</div><div class="val c-b">20</div><div class="sub">≈ 6 min teleop</div></div>
+    <div class="mc"><div class="lbl">Retraining</div><div class="val c-b">0</div><div class="sub">selectivity at deploy</div></div>
+  </div>
+
+  <div class="bcols">
+    <div class="bcol">
+      <h4 style="color:var(--accent)">Single target · n = 50</h4>
+      <div class="bg"><div class="bl"><span>Success</span><span>27 (54%)</span></div><div class="bw"><div class="bf" style="width:54%;background:var(--accent)">54%</div></div></div>
+      <div class="bg"><div class="bl"><span>Slip at grasp</span><span>13 (26%)</span></div><div class="bw"><div class="bf" style="width:26%;background:var(--danger)">26%</div></div></div>
+      <div class="bg"><div class="bl"><span>Slip in transport</span><span>10 (20%)</span></div><div class="bw"><div class="bf" style="width:20%;background:var(--warn)">20%</div></div></div>
+      <div class="bg"><div class="bl"><span>Wrong color</span><span>0 (0%)</span></div><div class="bw"><div class="bf" style="width:2%;background:var(--muted)"></div></div></div>
+    </div>
+    <div class="bcol">
+      <h4 style="color:var(--accent2)">3-color select · n = 25</h4>
+      <div class="bg"><div class="bl"><span>Success</span><span>13 (52%)</span></div><div class="bw"><div class="bf" style="width:52%;background:var(--accent2)">52%</div></div></div>
+      <div class="bg"><div class="bl"><span>Slip in transport</span><span>7 (28%)</span></div><div class="bw"><div class="bf" style="width:28%;background:var(--warn)">28%</div></div></div>
+      <div class="bg"><div class="bl"><span>Slip at grasp</span><span>5 (20%)</span></div><div class="bw"><div class="bf" style="width:20%;background:var(--danger)">20%</div></div></div>
+      <div class="bg"><div class="bl"><span>Wrong color</span><span>0 (0%)</span></div><div class="bw"><div class="bf" style="width:2%;background:var(--muted)"></div></div></div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <h4>What the numbers say</h4>
+    <p><strong>Selection is solved.</strong> Zero wrong-color grasps across all 75 trials, and the supervisor scores perfect precision/recall on 50 held-out frames — including frames with blue and pink distractors but no green.</p>
+    <p><strong>Failures are mechanical.</strong> The remaining errors are the policy dropping the upright marker in transport or at grasp — a low-level grasp-reliability limit of a 20-demo policy, not a supervision error.</p>
+  </div>
+
+  <figure>
+    <img src="assets/selectivity.png" alt="Left: green present among blue and pink, gate present, policy executes. Right: only distractors, gate absent, arm holds.">
+    <figcaption><b>Selectivity, from real frames.</b> Green present among distractors → gate <b>present</b> → the policy executes. Only blue and pink present → gate <b>absent</b> → the arm holds at home. The policy is identical in both; only the supervisor differs.</figcaption>
+  </figure>
+
+  <div class="tbl-title">Trial outcomes <span class="tnum">— 75 real-robot trials</span></div>
+  <div class="tbl-scroll">
+    <table class="rt">
+      <thead><tr><th class="rh">Setting</th><th>Trials</th><th>Success</th><th>Transport slip</th><th>Grasp slip</th><th>Wrong color</th><th>Selection acc.</th></tr></thead>
+      <tbody>
+        <tr><td class="rh">ACT only (baseline)</td><td class="na">—</td><td colspan="4" class="na">non-selective — grasps any color</td><td class="na">—</td></tr>
+        <tr><td class="rh">Single target</td><td>50</td><td>27 (54%)</td><td>10 (20%)</td><td>13 (26%)</td><td class="zero">0</td><td class="na">—</td></tr>
+        <tr><td class="rh">3-color select</td><td>25</td><td>13 (52%)</td><td>7 (28%)</td><td>5 (20%)</td><td class="zero">0</td><td class="ok">100%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tbl-note">All failures are physical slips; zero are selection errors. The unsupervised baseline has no way to choose a color.</p>
+
+  <div class="tbl-title">VLM supervisor detection <span class="tnum">— 50 held-out frames</span></div>
+  <div class="tbl-scroll">
+    <table class="rt">
+      <thead><tr><th class="rh">Target</th><th>Present</th><th>Absent</th><th>Precision</th><th>Recall</th><th>F1</th><th>Accuracy</th></tr></thead>
+      <tbody><tr><td class="rh">green marker</td><td>25</td><td>25</td><td class="ok">1.00</td><td class="ok">1.00</td><td class="ok">1.00</td><td class="ok">1.00</td></tr></tbody>
+    </table>
+  </div>
+  <p class="tbl-note">“Absent” frames contain blue/pink distractor markers but no green, so zero false positives reflects genuine color selectivity, not empty-scene rejection.</p>
+</div>
+
+<hr>
+
+<!-- VIDEOS -->
+<div class="sec" id="videos">
+  <div class="eyebrow-s"><span class="sig"></span>Demonstrations</div>
+  <h2>Watch it run</h2>
+  <p class="sec-sub">Three representative trials on the real SO-ARM101. Upload the clips to <code>videos/</code> with the filenames shown; each slot shows a placeholder until the file is present.</p>
+
+  <div class="vgrid3">
+    <div class="vc">
+      <div class="vwrap">
+        <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
+          <source src="videos/select_green.mp4" type="video/mp4">
+        </video>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/select_green.mp4</small></div>
+      </div>
+      <div class="vi"><span class="vb vb-g">Selective grasp</span><h4>Picks green, ignores the rest</h4><p>Green target among blue and pink distractors — the supervisor opens the gate and the policy completes the pick-and-place.</p></div>
+    </div>
+
+    <div class="vc">
+      <div class="vwrap">
+        <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
+          <source src="videos/reject_distractors.mp4" type="video/mp4">
+        </video>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/reject_distractors.mp4</small></div>
+      </div>
+      <div class="vi"><span class="vb vb-w">Correct rejection</span><h4>Only distractors → holds</h4><p>No green in the scene — the gate stays closed and the arm holds at the home pose instead of grasping a wrong-color marker.</p></div>
+    </div>
+
+    <div class="vc">
+      <div class="vwrap">
+        <video controls preload="metadata" onloadedmetadata="this.closest('.vwrap').classList.add('loaded')">
+          <source src="videos/retarget_abort.mp4" type="video/mp4">
+        </video>
+        <div class="vph"><span class="big">🎬</span>Video coming soon<small>videos/retarget_abort.mp4</small></div>
+      </div>
+      <div class="vi"><span class="vb vb-b">Live control</span><h4>Retarget &amp; mid-task abort</h4><p>Switch the target color on the fly, or remove the marker mid-approach — the arm aborts and returns home.</p></div>
+    </div>
+  </div>
+  <p class="tbl-note" style="text-align:center;margin-top:10px">Keep each clip under 100&nbsp;MB (GitHub's per-file limit). MP4 (H.264) at 720–1080p works well.</p>
+</div>
+
+<hr>
+
+<!-- METHOD -->
+<div class="sec" id="method">
+  <div class="eyebrow-s"><span class="sig"></span>How it works</div>
+  <h2>Decouple selection from execution</h2>
+  <p class="sec-sub">A fixed policy provides the skill; a VLM supervisor provides selection. Given a run-time target (e.g. “green marker”), the supervisor emits a binary gate — act when present, hold at home otherwise.</p>
+
+  <div class="two">
+    <div class="card g"><h3 style="color:var(--accent)">Frozen policy — the “how”</h3><p>An ACT policy trained from 20 demonstrations maps image + joint state to action chunks at 30&nbsp;Hz. It is never retrained; it has no notion of object identity.</p></div>
+    <div class="card b"><h3 style="color:var(--accent2)">VLM supervisor — the “whether”</h3><p>Cosmos3-Nano answers “is the target present?” on shared frames at ~1–2&nbsp;Hz. The target is a run-time string, so retargeting needs no retraining.</p></div>
+  </div>
+
+  <figure>
+    <img src="assets/formulation.png" alt="Gated command: execute the frozen policy when the target is present, hold at home when absent.">
+    <figcaption><b>Gated command.</b> The gate selects between executing the frozen policy (target present) and holding at home (absent or a non-target object).</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/method.png" alt="Asynchronous timing and the supervisor state machine.">
+    <figcaption><b>Asynchronous by design.</b> (a) The 30&nbsp;Hz control loop reads a shared gate flag without blocking while the supervisor updates it at ~1–2&nbsp;Hz. (b) The arm idles at home until the target is confirmed, runs the full trajectory, then returns; if the target vanishes during the approach the attempt aborts.</figcaption>
+  </figure>
+</div>
+
+<hr>
+
+<!-- DATASET -->
+<div class="sec" id="dataset">
+  <div class="eyebrow-s"><span class="sig"></span>The data cost</div>
+  <h2>Six minutes of teleoperation</h2>
+  <p class="sec-sub">The entire system is deployed from 20 teleoperated episodes — 10,566 frames at 30&nbsp;fps. The policy learns only the physical skill, with no object or language labels; all selectivity is added later by the supervisor.</p>
+
+  <div class="mgrid">
+    <div class="mc"><div class="lbl">Episodes</div><div class="val c-b">20</div><div class="sub">demonstrations</div></div>
+    <div class="mc"><div class="lbl">Frames</div><div class="val c-b">10,566</div><div class="sub">@ 30 fps</div></div>
+    <div class="mc"><div class="lbl">Teleoperation</div><div class="val c-b">~6 min</div><div class="sub">total</div></div>
+    <div class="mc"><div class="lbl">Avg episode</div><div class="val c-b">17.6 s</div><div class="sub">~528 frames</div></div>
+    <div class="mc"><div class="lbl">Camera</div><div class="val c-b" style="font-size:1.3rem">640×480</div><div class="sub">wrist RGB</div></div>
+    <div class="mc"><div class="lbl">Action</div><div class="val c-b">6-DoF</div><div class="sub">joint targets</div></div>
+  </div>
+
+  <figure>
+    <img src="assets/dataset_filmstrip.png" alt="Wrist-camera frames across one demonstration.">
+    <figcaption><b>One demonstration</b> (wrist camera): home → approach → grasp → lift → place → return, over ~21.7&nbsp;s.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/dataset_analysis.png" alt="Four-panel dataset analysis.">
+    <figcaption><b>Dataset at a glance.</b> Tight trajectory envelopes across the 20 episodes (a) show repeatable demonstrations; episodes are short and uniform (b); shoulder-lift and elbow-flex move most (c); motion is smooth and low-velocity (d).</figcaption>
+  </figure>
+</div>
+
+<hr>
+
+<!-- RESOURCES -->
+<div class="sec" id="resources">
+  <div class="eyebrow-s"><span class="sig"></span>Get it</div>
+  <h2>Model, dataset &amp; code</h2>
+  <p class="sec-sub">Links are placeholders — point them at your releases.</p>
+  <div class="cards">
+    <div class="rcard"><h3><span class="dot on"></span>Trained ACT policy</h3><p>The frozen policy from 20 demonstrations, with the LeRobot pre/post-processors.</p><div class="kv"><span>LeRobot / ACT</span><span>ResNet-18</span><span>~6.5 GB VRAM</span></div><a class="btn blue" href="#">Download model</a></div>
+    <div class="rcard"><h3><span class="dot on"></span>Demonstration dataset</h3><p>20 episodes · 10,566 frames @ 30 fps · 640×480 wrist camera + 6-DoF state. LeRobot format.</p><div class="kv"><span>20 episodes</span><span>~6 min</span><span>LeRobotDataset</span></div><a class="btn" href="#">Download dataset</a></div>
+    <div class="rcard"><h3><span class="dot off"></span>Code &amp; supervisor</h3><p>The async controller, the Cosmos supervisor server, and the GUI with live retargeting, abort, and shared autonomy.</p><div class="kv"><span>Python</span><span>Cosmos3-Nano</span><span>SO-ARM101</span></div><a class="btn ghost" href="#">Coming soon</a></div>
+    <div class="rcard"><h3><span class="dot off"></span>Paper</h3><p>Full method, implementation details, configuration, results and limitations.</p><div class="kv"><span>PDF</span><span>BibTeX below</span></div><a class="btn ghost" href="#">Read the paper</a></div>
+  </div>
+
+  <div class="tbl-title" style="margin-top:34px">BibTeX</div>
+  <div class="copybar">
+    <span style="font-size:.82rem;color:var(--muted)">Update authors, venue and year before publishing.</span>
+    <button class="copybtn" id="copy">Copy</button>
+  </div>
+  <pre class="bib" id="bib">@inproceedings{sanaullah2026vlmsupervised,
+  title     = {Asynchronous Language-Conditioned Object Selection for
+               Imitation Policies via a VLM Supervisor},
+  author    = {Sanaullah and Kumar, Abhishek and Kim, Jeong Yong and
+               Abbasi, Saad Jamshed and Han, Byung-Kil and Park, Dong Il},
+  booktitle = {Preprint},
+  year      = {2026}
+}</pre>
+</div>
+
+<footer>
+  <p>Asynchronous VLM-Supervised Selective Grasping · SO-ARM101 / LeRobot · NVIDIA Cosmos · 2026</p>
+  <p style="margin-top:5px">Designed by <strong>Sanaullah</strong> · links, authors &amp; affiliation are editable placeholders</p>
+</footer>
+
+<script>
+function toggleTheme(){
+  const h=document.documentElement;
+  const isLight=h.getAttribute('data-theme')!=='dark';
+  h.setAttribute('data-theme',isLight?'dark':'light');
+  document.getElementById('tog-btn').textContent=isLight?'☀ Light mode':'🌙 Dark mode';
+  try{localStorage.setItem('theme',isLight?'dark':'light');}catch(e){}
+}
+(function(){try{const t=localStorage.getItem('theme');if(t){document.documentElement.setAttribute('data-theme',t);document.getElementById('tog-btn').textContent=t==='dark'?'☀ Light mode':'🌙 Dark mode';}}catch(e){}})();
+// mark videos that already have data loaded (avoids placeholder flicker on refresh)
+addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('.vwrap video').forEach(v=>{if(v.readyState>=1)v.closest('.vwrap').classList.add('loaded');});});
+const cb=document.getElementById('copy');
+if(cb)cb.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(document.getElementById('bib').innerText);const t=cb.textContent;cb.textContent='Copied';setTimeout(()=>cb.textContent=t,1400);}catch(e){cb.textContent='Select & copy';}});
+</script>
+</body>
+</html>
