@@ -113,6 +113,8 @@ figure{margin:26px 0 8px}
 figure img{width:100%;height:auto;display:block;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 figcaption{font-size:.84rem;color:var(--muted);margin-top:11px;line-height:1.55}
 figcaption b{color:var(--text);font-weight:600}
+.figrow{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:760px){.figrow{grid-template-columns:1fr}}
 
 /* method cards */
 .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:8px 0 10px}
@@ -335,14 +337,16 @@ footer strong{color:var(--text)}
     <div class="card b"><h3 style="color:var(--accent2)">VLM supervisor — the “whether”</h3><p>Cosmos3-Nano answers “is the target present?” on shared frames at ~1–2&nbsp;Hz. The target is a run-time string, so retargeting needs no retraining.</p></div>
   </div>
 
-  <figure>
-    <img src="assets/formulation.png" alt="Gated command: execute the frozen policy when the target is present, hold at home when absent.">
-    <figcaption><b>Gated command.</b> The gate selects between executing the frozen policy (target present) and holding at home (absent or a non-target object).</figcaption>
-  </figure>
-  <figure>
-    <img src="assets/method.png" alt="Asynchronous timing and the supervisor state machine.">
-    <figcaption><b>Asynchronous by design.</b> (a) The 30&nbsp;Hz control loop reads a shared gate flag without blocking while the supervisor updates it at ~1–2&nbsp;Hz. (b) The arm idles at home until the target is confirmed, runs the full trajectory, then returns; if the target vanishes during the approach the attempt aborts.</figcaption>
-  </figure>
+  <div class="figrow">
+    <figure>
+      <img src="assets/formulation.png" alt="Gated command: execute the frozen policy when the target is present, hold at home when absent.">
+      <figcaption><b>Gated command.</b> The gate selects between executing the frozen policy (target present) and holding at home (absent or a non-target object).</figcaption>
+    </figure>
+    <figure>
+      <img src="assets/method.png" alt="Asynchronous timing and the supervisor state machine.">
+      <figcaption><b>Asynchronous by design.</b> (a) The 30&nbsp;Hz control loop reads a shared gate flag without blocking while the supervisor updates it at ~1–2&nbsp;Hz. (b) The arm idles at home until the target is confirmed, runs the full trajectory, then returns; if the target vanishes during the approach the attempt aborts.</figcaption>
+    </figure>
+  </div>
 </div>
 
 <hr>
