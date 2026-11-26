@@ -9,22 +9,20 @@ A vision-language model runs in parallel as a high-level supervisor and decides 
 [![Model](https://img.shields.io/badge/🤗-model-ffcc33)](<HF_MODEL_URL>)
 [![Dataset](https://img.shields.io/badge/🤗-dataset-2f5c9e)](<HF_DATASET_URL>)-->
 
-<p align="center">
-  <img src="assets/pipeline.png" width="90%" alt="System pipeline">
-</p>
+
 
 <table align="center">
 <tr>
 <td width="33%" align="center">
-<video src="https://github.com/Rao-Sanaullah/SOS-101-arm/raw/main/videos/one-object-picked.mp4" controls muted width="100%"></video>
+<video src="ATTACHMENT_URL_1" controls muted width="100%"></video>
 <br><sub><b>Selective grasp</b><br>picks green among three, ignores the rest</sub>
 </td>
 <td width="33%" align="center">
-<video src="https://github.com/Rao-Sanaullah/SOS-101-arm/raw/main/videos/only-green-two.mp4" controls muted width="100%"></video>
+<video src="ATTACHMENT_URL_2" controls muted width="100%"></video>
 <br><sub><b>Selective hold</b><br>picks green, ignores a new non-green marker</sub>
 </td>
 <td width="33%" align="center">
-<video src="https://github.com/Rao-Sanaullah/SOS-101-arm/raw/main/videos/3-objects.mp4" controls muted width="100%"></video>
+<video src="ATTACHMENT_URL_3" controls muted width="100%"></video>
 <br><sub><b>Three colors</b><br>— describe this one</sub>
 </td>
 </tr>
