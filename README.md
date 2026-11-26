@@ -39,61 +39,24 @@ The same channel adds run-time retargeting, mid-task abort with return-to-home, 
 
 Every failure was a *physical* grasp slip on the upright markers, **not** a selection error. All selectivity comes from the supervisor at zero additional data cost — the policy is trained from only **20 demonstrations (~6 min of teleoperation)**.
 
+<p align="center">
+  <img src="assets/selectivity.png" width="90%" alt="Selectivity: green present → gate present → act; distractors only → gate absent → hold">
+</p>
+
 ## Hardware
 
 - **Arm:** SO-ARM101 (WowRobo build of the LeRobot SO-101), 6-DoF, Feetech STS3215 servos, wrist RGB camera (640×480 @ 30 fps)
 - **Compute:** single workstation with an NVIDIA RTX 5090
-
-## Repository layout
-
-```
-cosmos_parallel_so101.py     # core: async control loop + parallel VLM thread + policy pipeline
-cosmos_gui_so101.py          # GUI: color dropdown, live retargeting, pause/blend, mid-task abort
-cosmos_server_so101.py       # Cosmos3-Nano HTTP server (/present, /locate) — runs in the GPU container
-home.json                    # overlook/home pose
-assets/                      # figures
-```
-
-## Setup
-
-```bash
-# 1. environment (Python 3.12) + LeRobot with Feetech support
-conda create -y -n lerobot python=3.12 && conda activate lerobot
-git clone https://github.com/huggingface/lerobot.git && cd lerobot
-pip install -e ".[feetech]"
-
-# 2. Blackwell (RTX 50-series) PyTorch
-pip install --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu128
-python -c "import torch; print(torch.cuda.get_device_capability(0), torch.cuda.is_available())"  # (12, 0) True
-```
-
-Start the Cosmos supervisor server (in its own GPU container/env), then confirm it is reachable:
-
-```bash
-python cosmos_server_so101.py          # serves /present on 0.0.0.0:5558
-curl -s http://<COSMOS_HOST>:5558/health   # {"ok": true}
-```
-
-## Usage
-
-**GUI (recommended):**
-
-```bash
-python cosmos_gui_so101.py
-```
-
-Pick a marker color, press **Play**. The arm holds at the overlook pose, the VLM watches in parallel, and the policy picks the target when it appears. Change the color live to retarget; use the manual panel to pause/take-over or nudge the arm during a pick.
-
-**Headless:**
-
-```bash
-python cosmos_parallel_so101.py --target "green marker" --home home.json --episode-time 20
-```
+- **Supervisor:** NVIDIA Cosmos3-Nano
 
 ## Model & dataset
 
 - **Trained ACT policy** — frozen policy from 20 demonstrations, with LeRobot pre/post-processors: `<HF_MODEL_URL>`
-- **Demonstration dataset** — 20 episodes, 10,566 frames @ 30 fps, LeRobot format: `<HF_DATASET_URL>`
+- **Demonstration dataset** — 20 episodes, 10,566 frames @ 30 fps, 640×480 wrist camera + 6-DoF state, LeRobot format: `<HF_DATASET_URL>`
+
+## Code
+
+Code release coming soon. ⭐ Star/watch this repo for updates.
 
 ## Citation
 
