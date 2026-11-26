@@ -4,7 +4,7 @@ Adding language-conditioned object selection to a **frozen** imitation policy �
 A vision-language model runs in parallel as a high-level supervisor and decides *whether* to act; a 20-demo ACT policy decides *how*.
 
 <!-- optional: project page / paper / model / dataset badges -->
-[![Project Page](https://img.shields.io/badge/project-page-2e8b4a)](<PROJECT_PAGE_URL>)
+[![Project Page](https://img.shields.io/badge/project-page-2e8b4a)](<https://rao-sanaullah.github.io/SOS-101-arm/>)
 <!--[![Paper](https://img.shields.io/badge/paper-PDF-333)](<PAPER_URL>)
 [![Model](https://img.shields.io/badge/🤗-model-ffcc33)](<HF_MODEL_URL>)
 [![Dataset](https://img.shields.io/badge/🤗-dataset-2f5c9e)](<HF_DATASET_URL>)-->
