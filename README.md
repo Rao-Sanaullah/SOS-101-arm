@@ -23,7 +23,7 @@ A vision-language model runs in parallel as a high-level supervisor and decides 
 </td>
 <td width="33%" align="center">
 <video src="ATTACHMENT_URL_3" controls muted width="100%"></video>
-<br><sub><b>Three colors</b><br>— describe this one</sub>
+<br><sub><b>Three colors</b><br>Green, then the other two colors requested in turn</sub>
 </td>
 </tr>
 </table>
