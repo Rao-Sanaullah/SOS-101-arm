@@ -138,8 +138,8 @@ table.rt td.rh,table.rt th.rh{text-align:left;font-weight:600;color:var(--text)}
 .tbl-note{font-size:.79rem;color:var(--muted);margin-top:9px}
 
 /* resource cards */
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
-@media(max-width:640px){.cards{grid-template-columns:1fr}}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px}
+@media(max-width:760px){.cards{grid-template-columns:1fr}}
 .rcard{border:1px solid var(--border);border-radius:14px;padding:20px;background:var(--card);display:flex;flex-direction:column;gap:9px;box-shadow:0 1px 4px var(--shadow)}
 .rcard h3{font-size:1.05rem;font-weight:600;margin:0;display:flex;align-items:center;gap:.5em}
 .rcard p{font-size:.86rem;color:var(--muted);flex:1}
